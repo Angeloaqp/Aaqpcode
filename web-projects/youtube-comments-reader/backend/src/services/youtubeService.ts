@@ -11,18 +11,124 @@ import { analyzeSentiment, extractVideoId } from '../utils/helpers';
 class YouTubeService {
   private apiKey: string;
   private baseURL = 'https://www.googleapis.com/youtube/v3';
+  private isDemoMode: boolean;
 
   constructor() {
     this.apiKey = process.env.YOUTUBE_API_KEY || '';
-    if (!this.apiKey) {
-      throw new Error('YouTube API Key não configurada');
+    this.isDemoMode = !this.apiKey || this.apiKey === 'demo_key_configure_sua_api_key_real';
+    
+    if (this.isDemoMode) {
+      console.log('⚠️  Executando em MODO DEMO - Configure uma YouTube API Key real para funcionalidade completa');
     }
+  }
+
+  /**
+   * Dados de demonstração quando não há API key
+   */
+  private getDemoData(videoId: string): CommentsResponse {
+    return {
+      videoInfo: {
+        id: videoId,
+        title: "Vídeo de Demonstração - Configure sua YouTube API Key",
+        description: "Este é um exemplo de resposta quando o app roda em modo demo.",
+        channelTitle: "Canal de Demonstração",
+        channelId: "demo_channel_id",
+        publishedAt: new Date().toISOString(),
+        viewCount: "1000000",
+        likeCount: "50000",
+        commentCount: "2500",
+        duration: "PT3M45S",
+        thumbnails: {
+          default: { url: "https://via.placeholder.com/120x90", width: 120, height: 90 },
+          medium: { url: "https://via.placeholder.com/320x180", width: 320, height: 180 },
+          high: { url: "https://via.placeholder.com/480x360", width: 480, height: 360 }
+        }
+      },
+      comments: [
+        {
+          id: "demo_comment_1",
+          text: "Ótimo vídeo! Muito bem explicado 👍",
+          author: "UsuarioDemo1",
+          authorChannelId: "demo_channel_1",
+          authorProfileImageUrl: "https://via.placeholder.com/50x50",
+          likeCount: 15,
+          publishedAt: new Date(Date.now() - 86400000).toISOString(),
+          updatedAt: new Date(Date.now() - 86400000).toISOString(),
+          isReply: false,
+          replyCount: 2,
+          sentiment: "positive",
+          replies: [
+            {
+              id: "demo_reply_1",
+              text: "Concordo totalmente!",
+              author: "UsuarioDemo2",
+              authorChannelId: "demo_channel_2",
+              authorProfileImageUrl: "https://via.placeholder.com/50x50",
+              likeCount: 3,
+              publishedAt: new Date(Date.now() - 82800000).toISOString(),
+              updatedAt: new Date(Date.now() - 82800000).toISOString(),
+              parentId: "demo_comment_1",
+              isReply: true,
+              replyCount: 0,
+              sentiment: "positive"
+            }
+          ]
+        },
+        {
+          id: "demo_comment_2",
+          text: "Não gostei muito dessa parte, poderia ser melhor explicado",
+          author: "CriticoDemo",
+          authorChannelId: "demo_channel_3",
+          authorProfileImageUrl: "https://via.placeholder.com/50x50",
+          likeCount: 2,
+          publishedAt: new Date(Date.now() - 172800000).toISOString(),
+          updatedAt: new Date(Date.now() - 172800000).toISOString(),
+          isReply: false,
+          replyCount: 0,
+          sentiment: "negative",
+          replies: []
+        },
+        {
+          id: "demo_comment_3",
+          text: "Informativo, obrigado por compartilhar",
+          author: "EstudanteDemo",
+          authorChannelId: "demo_channel_4",
+          authorProfileImageUrl: "https://via.placeholder.com/50x50",
+          likeCount: 8,
+          publishedAt: new Date(Date.now() - 259200000).toISOString(),
+          updatedAt: new Date(Date.now() - 259200000).toISOString(),
+          isReply: false,
+          replyCount: 1,
+          sentiment: "neutral",
+          replies: []
+        }
+      ],
+      totalResults: 3,
+      statistics: {
+        totalComments: 4, // Incluindo replies
+        averageLikes: 7,
+        sentimentDistribution: {
+          positive: 2,
+          negative: 1,
+          neutral: 1
+        },
+        topAuthors: [
+          { author: "UsuarioDemo1", commentCount: 1, totalLikes: 15 },
+          { author: "EstudanteDemo", commentCount: 1, totalLikes: 8 },
+          { author: "UsuarioDemo2", commentCount: 1, totalLikes: 3 }
+        ]
+      }
+    };
   }
 
   /**
    * Extrai informações do vídeo pelo ID
    */
   async getVideoInfo(videoId: string): Promise<YouTubeVideoInfo> {
+    if (this.isDemoMode) {
+      return this.getDemoData(videoId).videoInfo;
+    }
+
     try {
       const response = await axios.get<YouTubeAPIVideoResponse>(`${this.baseURL}/videos`, {
         params: {
@@ -71,6 +177,14 @@ class YouTubeService {
     maxResults: number = 100,
     pageToken?: string
   ): Promise<{ comments: YouTubeComment[]; nextPageToken?: string; totalResults: number }> {
+    if (this.isDemoMode) {
+      const demoData = this.getDemoData(videoId);
+      return {
+        comments: demoData.comments,
+        totalResults: demoData.totalResults
+      };
+    }
+
     try {
       const response = await axios.get<YouTubeAPICommentsResponse>(`${this.baseURL}/commentThreads`, {
         params: {
@@ -149,6 +263,10 @@ class YouTubeService {
     const videoId = extractVideoId(videoUrl);
     if (!videoId) {
       throw new Error('URL do YouTube inválida');
+    }
+
+    if (this.isDemoMode) {
+      return this.getDemoData(videoId);
     }
 
     // Buscar informações do vídeo e comentários em paralelo

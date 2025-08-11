@@ -64,7 +64,7 @@ app.use(validateContentType);
 app.use('/api', rateLimiter);
 
 // Rota de root
-app.get('/', (req, res) => {
+app.get('/', (_req, res) => {
   res.json({
     message: '🎥 YouTube Comments Reader API',
     version: '1.0.0',

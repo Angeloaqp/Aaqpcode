@@ -13,7 +13,7 @@ export const rateLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  handler: (req: Request, res: Response) => {
+  handler: (_req: Request, res: Response) => {
     res.status(429).json({
       error: 'Muitas requisições. Tente novamente em alguns minutos.',
       code: 'RATE_LIMIT_EXCEEDED',
@@ -29,7 +29,7 @@ export const errorHandler = (
   error: Error,
   req: Request,
   res: Response,
-  next: NextFunction
+  _next: NextFunction
 ): void => {
   console.error('Erro não tratado:', {
     message: error.message,
@@ -98,7 +98,7 @@ export const validateContentType = (req: Request, res: Response, next: NextFunct
 /**
  * Middleware de headers de segurança customizados
  */
-export const securityHeaders = (req: Request, res: Response, next: NextFunction): void => {
+export const securityHeaders = (_req: Request, res: Response, next: NextFunction): void => {
   // Adicionar headers personalizados
   res.setHeader('X-API-Version', '1.0.0');
   res.setHeader('X-Powered-By', 'YouTube Comments Reader');

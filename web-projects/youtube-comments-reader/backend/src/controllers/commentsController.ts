@@ -265,7 +265,7 @@ class CommentsController {
    * Endpoint de health check
    * GET /api/health
    */
-  healthCheck = async (req: Request, res: Response): Promise<void> => {
+  healthCheck = async (_req: Request, res: Response): Promise<void> => {
     res.json({
       success: true,
       message: 'YouTube Comments Reader API está funcionando',
